@@ -16,21 +16,54 @@ const app = express();
 // =====================================
 // Basic Middlewares
 // =====================================
+app.use(async (req, res, next) => {
+  try {
+    console.log("==============================");
+    console.log(
+      "REQUEST:",
+      req.method,
+      req.originalUrl
+    );
 
-app.use(express.json());
+    console.log(
+      "DB READY STATE BEFORE:",
+      mongoose.connection.readyState
+    );
 
-app.use(
-  cors({
-    origin: '*',
-    credentials: false,
-  })
-);
+    await connectDB();
 
-// =====================================
-// Cloudinary
-// =====================================
+    console.log(
+      "DB READY STATE AFTER:",
+      mongoose.connection.readyState
+    );
 
-connectCloudinary();
+    if (mongoose.connection.readyState !== 1) {
+      console.error("DATABASE CONNECTION FAILED");
+
+      return res.status(500).json({
+        success: false,
+        message: "Database is not connected",
+      });
+    }
+
+    console.log(
+      "DATABASE CONNECTED - CONTINUING REQUEST"
+    );
+
+    next();
+
+  } catch (error) {
+    console.error(
+      "DATABASE MIDDLEWARE ERROR:",
+      error.message
+    );
+
+    return res.status(500).json({
+      success: false,
+      message: "Database connection failed",
+    });
+  }
+});
 
 // =====================================
 // Root Route
@@ -97,68 +130,51 @@ app.get('/test-db', async (req, res) => {
 // =====================================
 // Database Middleware
 // =====================================
-
 app.use(async (req, res, next) => {
   try {
-    console.log('==============================');
+    console.log("==============================");
     console.log(
-      'REQUEST:',
+      "REQUEST:",
       req.method,
       req.originalUrl
     );
 
     console.log(
-      'MONGO_URI EXISTS:',
-      !!process.env.MONGO_URI
-    );
-
-    console.log(
-      'DB READY STATE BEFORE:',
+      "DB READY STATE BEFORE:",
       mongoose.connection.readyState
     );
 
-    const connected = await connectDB();
+    await connectDB();
 
     console.log(
-      'CONNECT RESULT:',
-      connected
-    );
-
-    console.log(
-      'DB READY STATE AFTER:',
+      "DB READY STATE AFTER:",
       mongoose.connection.readyState
     );
 
-    if (
-      !connected ||
-      mongoose.connection.readyState !== 1
-    ) {
-      console.error(
-        'DATABASE CONNECTION FAILED'
-      );
+    if (mongoose.connection.readyState !== 1) {
+      console.error("DATABASE CONNECTION FAILED");
 
       return res.status(500).json({
         success: false,
-        message: 'Database is not connected',
+        message: "Database is not connected",
       });
     }
 
     console.log(
-      'DATABASE CONNECTED - CONTINUING REQUEST'
+      "DATABASE CONNECTED - CONTINUING REQUEST"
     );
 
     next();
 
   } catch (error) {
     console.error(
-      'DATABASE MIDDLEWARE ERROR:',
+      "DATABASE MIDDLEWARE ERROR:",
       error.message
     );
 
     return res.status(500).json({
       success: false,
-      message: 'Database connection failed',
-      error: error.message,
+      message: "Database connection failed",
     });
   }
 });

@@ -1,41 +1,51 @@
 import mongoose from "mongoose";
 
+let isConnecting = null;
+
 const connectDB = async () => {
   try {
-
     // Already connected
     if (mongoose.connection.readyState === 1) {
       console.log("MongoDB already connected");
-      return true;
+      return;
+    }
+
+    // Connection already in progress
+    if (mongoose.connection.readyState === 2) {
+      console.log("MongoDB connection already in progress");
+
+      if (isConnecting) {
+        await isConnecting;
+      }
+
+      return;
     }
 
     // Check environment variable
     if (!process.env.MONGO_URI) {
-      console.error("MONGO_URI is not defined");
-      return false;
+      throw new Error("MONGO_URI is not defined");
     }
 
     console.log("Connecting to MongoDB...");
 
-    await mongoose.connect(
-      process.env.MONGO_URI,
-      {
-        serverSelectionTimeoutMS: 10000,
-      }
-    );
+    isConnecting = mongoose.connect(process.env.MONGO_URI, {
+      serverSelectionTimeoutMS: 10000,
+    });
+
+    await isConnecting;
 
     console.log("MongoDB Connected Successfully");
 
-    return true;
-
   } catch (error) {
-
     console.error(
       "MongoDB Connection Error:",
       error.message
     );
 
-    return false;
+    throw error;
+
+  } finally {
+    isConnecting = null;
   }
 };
 
