@@ -13,18 +13,39 @@ const AppContextProvider = (props) => {
     const [userData, setUserData] = useState(false)
 
     const getDoctorsData = useCallback(async () => {
-        try {
-            const { data } = await axios.get(backendUrl + '/api/doctor/list')
-            if (data.success) {
-                setDoctors(data.doctors)
-            } else {
-                toast.error(data.message)
-            }
-        } catch (error) {
-            console.log(error)
-            toast.error(error.message)
+    try {
+        console.log("========== GET DOCTORS ==========");
+        console.log("BACKEND URL:", backendUrl);
+        console.log(
+            "DOCTOR API:",
+            backendUrl + '/api/doctor/list'
+        );
+
+        const { data } = await axios.get(
+            backendUrl + '/api/doctor/list'
+        );
+
+        console.log("DOCTOR API RESPONSE:", data);
+
+        if (data.success) {
+            setDoctors(data.doctors);
+        } else {
+            toast.error(data.message);
         }
-    }, [backendUrl])
+
+    } catch (error) {
+        console.error("========== GET DOCTORS ERROR ==========");
+        console.error("ERROR MESSAGE:", error.message);
+        console.error("ERROR STATUS:", error.response?.status);
+        console.error("ERROR RESPONSE:", error.response?.data);
+        console.error("ERROR URL:", error.config?.url);
+
+        toast.error(
+            error.response?.data?.message ||
+            error.message
+        );
+    }
+}, [backendUrl]);
 
     const loadUserProfileData = useCallback(async () => {
         try {
@@ -48,7 +69,7 @@ const AppContextProvider = (props) => {
 
                 toast.error(data.message || "User data not found")
             }
-            
+
             } catch (error) {
             console.log(error)
             toast.error(error.message)
