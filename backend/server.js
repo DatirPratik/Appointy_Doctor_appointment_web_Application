@@ -16,54 +16,15 @@ const app = express();
 // =====================================
 // Basic Middlewares
 // =====================================
-app.use(async (req, res, next) => {
-  try {
-    console.log("==============================");
-    console.log(
-      "REQUEST:",
-      req.method,
-      req.originalUrl
-    );
 
-    console.log(
-      "DB READY STATE BEFORE:",
-      mongoose.connection.readyState
-    );
+app.use(express.json());
 
-    await connectDB();
-
-    console.log(
-      "DB READY STATE AFTER:",
-      mongoose.connection.readyState
-    );
-
-    if (mongoose.connection.readyState !== 1) {
-      console.error("DATABASE CONNECTION FAILED");
-
-      return res.status(500).json({
-        success: false,
-        message: "Database is not connected",
-      });
-    }
-
-    console.log(
-      "DATABASE CONNECTED - CONTINUING REQUEST"
-    );
-
-    next();
-
-  } catch (error) {
-    console.error(
-      "DATABASE MIDDLEWARE ERROR:",
-      error.message
-    );
-
-    return res.status(500).json({
-      success: false,
-      message: "Database connection failed",
-    });
-  }
-});
+app.use(
+  cors({
+    origin: '*',
+    credentials: false,
+  })
+);
 
 // =====================================
 // Root Route
@@ -77,14 +38,19 @@ app.get('/', (req, res) => {
 });
 
 // =====================================
-// Database Test Route
+// TEST DB ROUTE
 // =====================================
 
 app.get('/test-db', async (req, res) => {
   try {
     console.log('==============================');
     console.log('TEST DB REQUEST');
-    console.log('MONGO_URI EXISTS:', !!process.env.MONGO_URI);
+
+    console.log(
+      'MONGO_URI EXISTS:',
+      !!process.env.MONGO_URI
+    );
+
     console.log(
       'DB READY STATE BEFORE:',
       mongoose.connection.readyState
@@ -92,7 +58,11 @@ app.get('/test-db', async (req, res) => {
 
     const connected = await connectDB();
 
-    console.log('CONNECT RESULT:', connected);
+    console.log(
+      'CONNECT RESULT:',
+      connected
+    );
+
     console.log(
       'DB READY STATE AFTER:',
       mongoose.connection.readyState
@@ -114,6 +84,7 @@ app.get('/test-db', async (req, res) => {
     });
 
   } catch (error) {
+
     console.error(
       'TEST DB ERROR:',
       error.message
@@ -128,11 +99,14 @@ app.get('/test-db', async (req, res) => {
 });
 
 // =====================================
-// Database Middleware
+// DATABASE MIDDLEWARE
 // =====================================
+
 app.use(async (req, res, next) => {
   try {
+
     console.log("==============================");
+
     console.log(
       "REQUEST:",
       req.method,
@@ -151,8 +125,12 @@ app.use(async (req, res, next) => {
       mongoose.connection.readyState
     );
 
-    if (mongoose.connection.readyState !== 1) {
-      console.error("DATABASE CONNECTION FAILED");
+    if (
+      mongoose.connection.readyState !== 1
+    ) {
+      console.error(
+        "DATABASE CONNECTION FAILED"
+      );
 
       return res.status(500).json({
         success: false,
@@ -167,6 +145,7 @@ app.use(async (req, res, next) => {
     next();
 
   } catch (error) {
+
     console.error(
       "DATABASE MIDDLEWARE ERROR:",
       error.message
@@ -175,12 +154,13 @@ app.use(async (req, res, next) => {
     return res.status(500).json({
       success: false,
       message: "Database connection failed",
+      error: error.message,
     });
   }
 });
 
 // =====================================
-// API Routes
+// API ROUTES
 // =====================================
 
 app.use(
@@ -199,7 +179,7 @@ app.use(
 );
 
 // =====================================
-// 404 Handler
+// 404
 // =====================================
 
 app.use((req, res) => {
@@ -211,10 +191,17 @@ app.use((req, res) => {
 });
 
 // =====================================
-// Local Development
+// CLOUDINARY
+// =====================================
+
+connectCloudinary();
+
+// =====================================
+// LOCAL DEVELOPMENT
 // =====================================
 
 if (!process.env.VERCEL) {
+
   const port = process.env.PORT || 4000;
 
   app.listen(port, () => {
@@ -225,7 +212,7 @@ if (!process.env.VERCEL) {
 }
 
 // =====================================
-// Vercel Export
+// VERCEL
 // =====================================
 
 export default app;
