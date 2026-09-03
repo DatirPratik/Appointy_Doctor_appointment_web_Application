@@ -19,6 +19,9 @@ import DoctorProfile from './pages/Doctor/DoctorProfile'
 const App = () => {
   const { dToken } = useContext(DoctorContext)
   const { aToken } = useContext(AdminContext)
+
+  console.log("ADMIN TOKEN:", aToken)
+  console.log("DOCTOR TOKEN:", dToken)
   const location = useLocation()
 
   // Redirect "/" to the proper dashboard
