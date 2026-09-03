@@ -13,9 +13,10 @@ import userRouter from './routes/userRoute.js';
 
 const app = express();
 
-// ================================
-// Middlewares
-// ================================
+// =====================================
+// Basic Middlewares
+// =====================================
+
 app.use(express.json());
 
 app.use(
@@ -25,33 +26,65 @@ app.use(
   })
 );
 
-// ================================
+// =====================================
 // Cloudinary
-// ================================
+// =====================================
+
 connectCloudinary();
 
-// ================================
-// Root API
-// ================================
+// =====================================
+// Root Route
+// =====================================
+
 app.get('/', (req, res) => {
-  res.status(200).send('API Working');
+  res.status(200).json({
+    success: true,
+    message: 'API Working',
+  });
 });
 
-// ================================
-// Test MongoDB
-// ================================
+// =====================================
+// Database Test Route
+// =====================================
+
 app.get('/test-db', async (req, res) => {
   try {
+    console.log('==============================');
+    console.log('TEST DB REQUEST');
+    console.log('MONGO_URI EXISTS:', !!process.env.MONGO_URI);
+    console.log(
+      'DB READY STATE BEFORE:',
+      mongoose.connection.readyState
+    );
+
     const connected = await connectDB();
 
-    if (connected && mongoose.connection.readyState === 1) {
-      return res.status(200).send('Database is connected');
+    console.log('CONNECT RESULT:', connected);
+    console.log(
+      'DB READY STATE AFTER:',
+      mongoose.connection.readyState
+    );
+
+    if (
+      connected &&
+      mongoose.connection.readyState === 1
+    ) {
+      return res.status(200).json({
+        success: true,
+        message: 'Database is connected',
+      });
     }
 
-    return res.status(500).send('Database is NOT connected');
+    return res.status(500).json({
+      success: false,
+      message: 'Database is NOT connected',
+    });
 
   } catch (error) {
-    console.error('Test DB Error:', error.message);
+    console.error(
+      'TEST DB ERROR:',
+      error.message
+    );
 
     return res.status(500).json({
       success: false,
@@ -61,26 +94,66 @@ app.get('/test-db', async (req, res) => {
   }
 });
 
-// ================================
+// =====================================
 // Database Middleware
-// ================================
-// MongoDB connection will be checked
-// before API routes execute.
+// =====================================
+
 app.use(async (req, res, next) => {
   try {
+    console.log('==============================');
+    console.log(
+      'REQUEST:',
+      req.method,
+      req.originalUrl
+    );
+
+    console.log(
+      'MONGO_URI EXISTS:',
+      !!process.env.MONGO_URI
+    );
+
+    console.log(
+      'DB READY STATE BEFORE:',
+      mongoose.connection.readyState
+    );
+
     const connected = await connectDB();
 
-    if (!connected || mongoose.connection.readyState !== 1) {
+    console.log(
+      'CONNECT RESULT:',
+      connected
+    );
+
+    console.log(
+      'DB READY STATE AFTER:',
+      mongoose.connection.readyState
+    );
+
+    if (
+      !connected ||
+      mongoose.connection.readyState !== 1
+    ) {
+      console.error(
+        'DATABASE CONNECTION FAILED'
+      );
+
       return res.status(500).json({
         success: false,
         message: 'Database is not connected',
       });
     }
 
+    console.log(
+      'DATABASE CONNECTED - CONTINUING REQUEST'
+    );
+
     next();
 
   } catch (error) {
-    console.error('Database Middleware Error:', error.message);
+    console.error(
+      'DATABASE MIDDLEWARE ERROR:',
+      error.message
+    );
 
     return res.status(500).json({
       success: false,
@@ -90,27 +163,53 @@ app.use(async (req, res, next) => {
   }
 });
 
-// ================================
+// =====================================
 // API Routes
-// ================================
-app.use('/api/admin', adminRouter);
+// =====================================
 
-app.use('/api/doctor', doctorRouter);
+app.use(
+  '/api/admin',
+  adminRouter
+);
 
-app.use('/api/user', userRouter);
+app.use(
+  '/api/doctor',
+  doctorRouter
+);
 
-// ================================
+app.use(
+  '/api/user',
+  userRouter
+);
+
+// =====================================
+// 404 Handler
+// =====================================
+
+app.use((req, res) => {
+  res.status(404).json({
+    success: false,
+    message: 'API route not found',
+    path: req.originalUrl,
+  });
+});
+
+// =====================================
 // Local Development
-// ================================
+// =====================================
+
 if (!process.env.VERCEL) {
   const port = process.env.PORT || 4000;
 
   app.listen(port, () => {
-    console.log(`Server started on PORT: ${port}`);
+    console.log(
+      `Server started on PORT ${port}`
+    );
   });
 }
 
-// ================================
-// Vercel
-// ================================
+// =====================================
+// Vercel Export
+// =====================================
+
 export default app;
